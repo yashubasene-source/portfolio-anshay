@@ -505,87 +505,115 @@ function renderPortfolioGrids() {
   const portGrid = document.getElementById('port-grid');
   if (portGrid) {
     portGrid.innerHTML = '';
-    caseStudies.forEach((item) => portGrid.appendChild(createCaseStudyCard(item)));
   }
 
   const reelsTrack = document.getElementById('reels-track');
   if (reelsTrack) {
     reelsTrack.innerHTML = '';
-    for (let i = 1; i <= 50; i += 1) {
-      if (data['short-reel'] && data['short-reel'][i] && data['short-reel'][i].title) {
-        reelsTrack.appendChild(createReelCard(data['short-reel'][i]));
-      }
-    }
   }
 
   const graphicsTrack = document.getElementById('graphics-track');
   if (graphicsTrack) {
     graphicsTrack.innerHTML = '';
-    for (let i = 1; i <= 50; i += 1) {
-      if (data.graphic && data.graphic[i] && data.graphic[i].title) {
-        graphicsTrack.appendChild(createGraphicCard(data.graphic[i]));
-      }
-    }
   }
+
+  function appendInBatches(target, items, builder, batchSize) {
+    if (!target || !items.length) return;
+    let index = 0;
+    const token = String(Date.now() + Math.random());
+    target.dataset.renderToken = token;
+
+    function appendBatch() {
+      if (target.dataset.renderToken !== token) return;
+      const fragment = document.createDocumentFragment();
+      const end = Math.min(index + batchSize, items.length);
+      for (; index < end; index += 1) {
+        fragment.appendChild(builder(items[index]));
+      }
+      target.appendChild(fragment);
+      if (index < items.length) requestAnimationFrame(appendBatch);
+    }
+
+    requestAnimationFrame(appendBatch);
+  }
+
+  const reelItems = Object.keys(data['short-reel'] || {})
+    .map((key) => data['short-reel'][key])
+    .filter((item) => item && item.title);
+  const graphicItems = Object.keys(data.graphic || {})
+    .map((key) => data.graphic[key])
+    .filter((item) => item && item.title);
+
+  appendInBatches(portGrid, caseStudies, createCaseStudyCard, 6);
+  appendInBatches(reelsTrack, reelItems, createReelCard, 8);
+  appendInBatches(graphicsTrack, graphicItems, createGraphicCard, 8);
 }
 
-const lenis = new Lenis({
-  // Smooth scrolling settings
-  duration: window.innerWidth <= 768 ? 0.8 : 1.2,
-  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-  smoothWheel: true
-});
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isLowEndDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+  (navigator.connection && navigator.connection.saveData);
+const shouldUseMotionEnhancements = !prefersReducedMotion && !isLowEndDevice && window.innerWidth > 768;
+const lenis = shouldUseMotionEnhancements && typeof Lenis !== 'undefined'
+  ? new Lenis({
+      // Smooth scrolling settings
+      duration: 1.05,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true
+    })
+  : { raf() {}, on() {}, stop() {}, start() {} };
 
 /* RAF loop for Lenis */
-gsap.registerPlugin(ScrollTrigger);
-lenis.on('scroll', ScrollTrigger.update);
+if (shouldUseMotionEnhancements && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+  lenis.on('scroll', ScrollTrigger.update);
 
-function raf(time) {
-  lenis.raf(time);
-  requestAnimationFrame(raf);
-}
-requestAnimationFrame(raf);
-
-ScrollTrigger.create({
-  // Navbar ko scroll ke baad solid background dene ke liye.
-  start: 'top -20',
-  onUpdate: (self) => {
-    const navbar = document.getElementById('navbar');
-    if (navbar) navbar.classList.toggle('scrolled', self.scroll() > 20);
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
   }
-});
+  requestAnimationFrame(raf);
 
-gsap.utils.toArray('.reveal').forEach((el) => {
-  // Jitne bhi .reveal elements hain unhe scroll par fade-up animation milega.
-  gsap.fromTo(el, { opacity: 0, y: 35 }, {
-    opacity: 1,
-    y: 0,
-    duration: 0.85,
-    ease: 'power3.out',
-    scrollTrigger: {
-      trigger: el,
-      start: 'top 88%',
-      toggleActions: 'play none none none'
+  ScrollTrigger.create({
+    // Navbar ko scroll ke baad solid background dene ke liye.
+    start: 'top -20',
+    onUpdate: (self) => {
+      const navbar = document.getElementById('navbar');
+      if (navbar) navbar.classList.toggle('scrolled', self.scroll() > 20);
     }
   });
-});
 
-gsap.to('.hero-left', {
-  // Hero ke left content ko halka sa parallax move deta hai.
-  yPercent: -15,
-  ease: 'none',
-  scrollTrigger: {
-    trigger: '.hero',
-    start: 'top top',
-    end: 'bottom top',
-    scrub: true
-  }
-});
+  gsap.utils.toArray('.reveal').forEach((el) => {
+    // Jitne bhi .reveal elements hain unhe scroll par fade-up animation milega.
+    gsap.fromTo(el, { opacity: 0, y: 35 }, {
+      opacity: 1,
+      y: 0,
+      duration: 0.85,
+      ease: 'power3.out',
+      scrollTrigger: {
+        trigger: el,
+        start: 'top 88%',
+        toggleActions: 'play none none none'
+      }
+    });
+  });
+
+  gsap.to('.hero-left', {
+    // Hero ke left content ko halka sa parallax move deta hai.
+    yPercent: -15,
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '.hero',
+      start: 'top top',
+      end: 'bottom top',
+      scrub: true
+    }
+  });
+}
 
 /* initThreeJS â€” called dynamically from index.html 2s after page load.
    Three.js NOT in initial bundle = zero LCP/FCP impact. */
 function initThreeJS() {
-  if (window.innerWidth <= 768) return;
+  if (!shouldUseMotionEnhancements) return;
   if (typeof THREE === 'undefined') return;
   const canvas = document.getElementById('hero-canvas');
   if (!canvas) return;
@@ -594,7 +622,7 @@ function initThreeJS() {
   const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.15));
 
   const geom = new THREE.IcosahedronGeometry(1.8, 1);
   const mat = new THREE.MeshPhongMaterial({ color: 0xa855f7, wireframe: true, transparent: true, opacity: 0.12 });
@@ -608,7 +636,7 @@ function initThreeJS() {
   mesh2.position.set(-3.5, 1, -2);
   scene.add(mesh2);
 
-  const count = 500;
+  const count = 240;
   const positions = new Float32Array(count * 3);
   for (let i = 0; i < count * 3; i++) positions[i] = (Math.random() - 0.5) * 12;
   const pGeom = new THREE.BufferGeometry();
@@ -629,8 +657,27 @@ function initThreeJS() {
     mouseY = e.clientY / window.innerHeight - 0.5;
   }, { passive: true });
 
+  let visible = true;
+  let rafId = 0;
+  const heroObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      visible = entry.isIntersecting;
+      if (!visible && rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = 0;
+      } else if (visible && !rafId) {
+        animate();
+      }
+    });
+  }, { threshold: 0.15 });
+  heroObserver.observe(canvas);
+
   function animate() {
-    requestAnimationFrame(animate);
+    if (!visible) {
+      rafId = 0;
+      return;
+    }
+    rafId = requestAnimationFrame(animate);
     mesh.rotation.x += 0.003;
     mesh.rotation.y += 0.004;
     mesh2.rotation.x -= 0.004;
@@ -925,9 +972,6 @@ document.addEventListener('keydown', (event) => {
 
 const cursorDot = document.querySelector('.cursor-dot');
 const cursorOutline = document.querySelector('.cursor-outline');
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const isLowEndDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
-  (navigator.connection && navigator.connection.saveData);
 
 function attachHoverEvents() {
   // Custom cursor ko batata hai ki kis element par hover-link aur kis par hover-video style lagani hai.
