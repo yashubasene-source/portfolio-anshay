@@ -6,16 +6,7 @@
 const IS_MOBILE = window.innerWidth <= 768 || !window.matchMedia('(pointer: fine)').matches;
 const IS_LOW_END = IS_MOBILE && (navigator.hardwareConcurrency || 4) <= 4;
 
-// Mobile pe Three.js canvas skip karna (CSS display:none se hidden rahega)
-// Grain animation JS se bhi off karo
-if (IS_MOBILE) {
-  // Lenis smooth scroll bhi mobile pe lite mode me
-  // (already initialized upar, but isko override karte hain)
-  try {
-    // Reduce GSAP animation complexity on mobile
-    gsap.globalTimeline.timeScale(IS_LOW_END ? 1.5 : 1.2);
-  } catch(e) {}
-}
+// Motion tuning removed with GSAP. Native interactions now keep CPU lower by default.
 
 // ===== VIDEO AUTOPLAY OPTIMIZATION =====
 // Auto-pause background videos when they scroll out of view to save CPU/GPU

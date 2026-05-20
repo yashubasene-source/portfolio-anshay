@@ -582,33 +582,6 @@
   }
 
   /* ================================================
-     3D TILT
-  ================================================ */
-  var TMAX=14, TPERSP=900;
-  function applyTilt(card,e) {
-    if (isMobile()||prefersReducedMotion) return;
-    var inner=card.querySelector('.sc-card-inner'), gloss=card.querySelector('.sc-gloss');
-    if (!inner) return;
-    var r=card.getBoundingClientRect(), x=(e.clientX-r.left)/r.width, y=(e.clientY-r.top)/r.height;
-    inner.style.transform='perspective('+TPERSP+'px) rotateX('+( -(y-0.5)*2*TMAX )+'deg) rotateY('+( (x-0.5)*2*TMAX )+'deg) scale3d(1.04,1.04,1.04)';
-    inner.style.transition='transform 0.05s linear';
-    if (gloss) gloss.style.background='radial-gradient(circle at '+(x*100).toFixed(1)+'% '+(y*100).toFixed(1)+'%, rgba(255,255,255,0.18) 0%, transparent 55%)';
-  }
-  function resetTilt(card) {
-    var inner=card.querySelector('.sc-card-inner'); if(!inner) return;
-    card.classList.add('leaving-tilt');
-    inner.style.transform='perspective('+TPERSP+'px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)';
-    inner.style.transition='';
-    setTimeout(function(){ card.classList.remove('leaving-tilt'); },600);
-  }
-  function attachTilt() {
-    document.querySelectorAll('.sc-card').forEach(function(c){
-      c.addEventListener('mousemove', function(e){ applyTilt(c,e); });
-      c.addEventListener('mouseleave',function(){ resetTilt(c); });
-    });
-  }
-
-  /* ================================================
      FILTERS
   ================================================ */
   function initFilters() {
@@ -619,7 +592,6 @@
         tab.classList.add('active');
         currentSkill = tab.dataset.filter;
         renderShowcase();
-        requestAnimationFrame(function(){ attachTilt(); attachCursor(); });
       });
     });
   }
@@ -635,7 +607,6 @@
     
     currentNiche = niche;
     renderShowcase();
-    requestAnimationFrame(function(){ attachTilt(); attachCursor(); });
 
     // Also update any old .port-card items just in case they exist
     var map = {
@@ -657,40 +628,12 @@
   };
 
   /* ================================================
-     SPOTLIGHT
-  ================================================ */
-  function initSpotlight() {
-    var sec=document.getElementById('portfolio'); if(!sec) return;
-    if (isMobile() || prefersReducedMotion) return;
-    var sp=sec.querySelector('.showcase-spotlight');
-    if(!sp){ sp=document.createElement('div'); sp.className='showcase-spotlight'; sec.appendChild(sp); }
-    sec.addEventListener('mousemove',function(e){
-      var r=sec.getBoundingClientRect();
-      sp.style.left=(e.clientX-r.left)+'px';
-      sp.style.top=(e.clientY-r.top+sec.scrollTop)+'px';
-    });
-  }
-
-  /* ================================================
-     CURSOR
-  ================================================ */
-  function attachCursor() {
-    var co=document.querySelector('.cursor-outline'); if(!co) return;
-    document.querySelectorAll('.sc-card').forEach(function(el){
-      if(el.dataset.scCursor==='1') return;
-      el.addEventListener('mouseenter',function(){ co.classList.add('hover-video'); });
-      el.addEventListener('mouseleave',function(){ co.classList.remove('hover-video'); });
-      el.dataset.scCursor='1';
-    });
-  }
-
-  /* ================================================
      BOOT
   ================================================ */
   function boot() {
     if (!document.getElementById('showcase-grid')) return;
     renderShowcase();
-    requestAnimationFrame(function(){ initFilters(); attachTilt(); attachCursor(); initSpotlight(); });
+    requestAnimationFrame(function(){ initFilters(); });
   }
 
   if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);

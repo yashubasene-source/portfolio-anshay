@@ -17,9 +17,7 @@
      TECHNOLOGIES USED:
      - HTML5: Semantic structure
      - CSS3: Advanced animations, gradients, backdrop filters
-     - JavaScript: Interactive effects, smooth scrolling, GSAP animations
-     - Three.js: 3D hero canvas with particles
-     - GSAP: Animation library with ScrollTrigger
+     - JavaScript: Interactive effects and native scroll behaviors
      - Native scroll: no smooth-scroll library
      
      TARGET AUDIENCE:
@@ -1166,10 +1164,6 @@
     </div>
   </div>
 
-  <!-- GSAP + ScrollTrigger: at body-end so they never block render -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-
   <!-- App scripts: at body-end, no defer needed -->
   <script src="assets/js/script.min.js"></script>
   <!-- Premium 3D Masonry Showcase -->
@@ -1179,9 +1173,5 @@
   <!-- soundfix.js removed: duplicate of extras.js audio logic -->
   <script src="assets/js/extras.min.js"></script>
 
-  <!-- Three.js removed to reduce runtime cost -->
-  <script>
-    // Service worker registration removed for lighter runtime.
-  </script>
 </body>
 </html>

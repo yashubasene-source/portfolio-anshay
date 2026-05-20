@@ -553,61 +553,83 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 const isLowEndDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
   (navigator.connection && navigator.connection.saveData);
 const shouldUseMotionEnhancements = !prefersReducedMotion && !isLowEndDevice && window.innerWidth > 768;
-const lenis = shouldUseMotionEnhancements && typeof Lenis !== 'undefined'
-  ? new Lenis({
-      // Smooth scrolling settings
-      duration: 1.05,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true
-    })
-  : { raf() {}, on() {}, stop() {}, start() {} };
+const lenis = { raf() {}, on() {}, stop() {}, start() {} };
 
-/* RAF loop for native/Lenis-style smooth scroll, only when the library exists */
-if (shouldUseMotionEnhancements && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-  lenis.on('scroll', ScrollTrigger.update);
+function initRevealAnimations() {
+  const revealEls = document.querySelectorAll('.reveal');
+  if (!revealEls.length || !shouldUseMotionEnhancements) return;
 
-  function raf(time) {
-    lenis.raf(time);
-    requestAnimationFrame(raf);
-  }
-  requestAnimationFrame(raf);
-
-  ScrollTrigger.create({
-    // Navbar ko scroll ke baad solid background dene ke liye.
-    start: 'top -20',
-    onUpdate: (self) => {
-      const navbar = document.getElementById('navbar');
-      if (navbar) navbar.classList.toggle('scrolled', self.scroll() > 20);
-    }
+  revealEls.forEach((el) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(35px)';
+    el.style.transition = 'opacity 0.85s ease, transform 0.85s cubic-bezier(0.22, 1, 0.36, 1)';
+    el.style.willChange = 'opacity, transform';
   });
 
-  gsap.utils.toArray('.reveal').forEach((el) => {
-    // Jitne bhi .reveal elements hain unhe scroll par fade-up animation milega.
-    gsap.fromTo(el, { opacity: 0, y: 35 }, {
-      opacity: 1,
-      y: 0,
-      duration: 0.85,
-      ease: 'power3.out',
-      scrollTrigger: {
-        trigger: el,
-        start: 'top 88%',
-        toggleActions: 'play none none none'
-      }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+      observer.unobserve(entry.target);
     });
-  });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
 
-  gsap.to('.hero-left', {
-    // Hero ke left content ko halka sa parallax move deta hai.
-    yPercent: -15,
-    ease: 'none',
-    scrollTrigger: {
-      trigger: '.hero',
-      start: 'top top',
-      end: 'bottom top',
-      scrub: true
-    }
-  });
+  revealEls.forEach((el) => observer.observe(el));
+}
+
+function initHeroStatsCounter() {
+  const stats = document.querySelector('.hero-stats');
+  if (!stats) return;
+
+  const run = () => {
+    document.querySelectorAll('.hero-stat h3').forEach((el) => {
+      const text = el.textContent;
+      const num = parseInt(text, 10);
+      const suffix = text.replace(String(num), '');
+      animateCounter(el, num, suffix);
+    });
+  };
+
+  if (!shouldUseMotionEnhancements) {
+    run();
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      run();
+      observer.disconnect();
+    });
+  }, { threshold: 0.4 });
+
+  observer.observe(stats);
+}
+
+function initHeroParallax() {
+  if (!shouldUseMotionEnhancements) return;
+  const heroLeft = document.querySelector('.hero-left');
+  const hero = document.querySelector('.hero');
+  if (!heroLeft || !hero) return;
+
+  let ticking = false;
+  const update = () => {
+    const rect = hero.getBoundingClientRect();
+    const viewport = window.innerHeight || document.documentElement.clientHeight;
+    const progress = Math.max(0, Math.min(1, (viewport - rect.top) / (viewport + rect.height)));
+    const offset = -15 * progress;
+    heroLeft.style.transform = `translate3d(0, ${offset}%, 0)`;
+    ticking = false;
+  };
+
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  }, { passive: true });
+
+  update();
 }
 
 function initInfiniteGraphicsTrack() {
@@ -732,21 +754,6 @@ function animateCounter(el, target, suffix) {
 
   requestAnimationFrame(step);
 }
-
-ScrollTrigger.create({
-  // Hero stats tab animate honge jab user un tak scroll karega.
-  trigger: '.hero-stats',
-  start: 'top 85%',
-  once: true,
-  onEnter: () => {
-    document.querySelectorAll('.hero-stat h3').forEach((el) => {
-      const text = el.textContent;
-      const num = parseInt(text, 10);
-      const suffix = text.replace(String(num), '');
-      animateCounter(el, num, suffix);
-    });
-  }
-});
 
 /* attachPortfolioTilt removed â€” was a no-op stub that always returned immediately */
 
@@ -884,24 +891,30 @@ document.addEventListener('keydown', (event) => {
 
 const cursorDot = document.querySelector('.cursor-dot');
 const cursorOutline = document.querySelector('.cursor-outline');
+let hoverEventsBound = false;
 
 function attachHoverEvents() {
   // Custom cursor ko batata hai ki kis element par hover-link aur kis par hover-video style lagani hai.
-  if (!cursorDot || !cursorOutline) return;
+  if (!cursorDot || !cursorOutline || hoverEventsBound) return;
+  hoverEventsBound = true;
 
-  document.querySelectorAll('a, button, .filter-btn').forEach((el) => {
-    if (el.dataset.cursorBound === 'true') return;
-    el.addEventListener('mouseenter', () => cursorOutline.classList.add('hover-link'));
-    el.addEventListener('mouseleave', () => cursorOutline.classList.remove('hover-link'));
-    el.dataset.cursorBound = 'true';
-  });
+  document.addEventListener('pointerover', (event) => {
+    const linkTarget = event.target.closest('a, button, .filter-btn');
+    const videoTarget = event.target.closest('.port-card, .reel-card');
+    if (linkTarget) cursorOutline.classList.add('hover-link');
+    if (videoTarget) cursorOutline.classList.add('hover-video');
+  }, { passive: true });
 
-  document.querySelectorAll('.port-card, .reel-card').forEach((el) => {
-    if (el.dataset.cursorBound === 'true') return;
-    el.addEventListener('mouseenter', () => cursorOutline.classList.add('hover-video'));
-    el.addEventListener('mouseleave', () => cursorOutline.classList.remove('hover-video'));
-    el.dataset.cursorBound = 'true';
-  });
+  document.addEventListener('pointerout', (event) => {
+    const linkTarget = event.target.closest('a, button, .filter-btn');
+    const videoTarget = event.target.closest('.port-card, .reel-card');
+    if (linkTarget && (!event.relatedTarget || !linkTarget.contains(event.relatedTarget))) {
+      cursorOutline.classList.remove('hover-link');
+    }
+    if (videoTarget && (!event.relatedTarget || !videoTarget.contains(event.relatedTarget))) {
+      cursorOutline.classList.remove('hover-video');
+    }
+  }, { passive: true });
 }
 
 if (cursorDot && cursorOutline && !prefersReducedMotion && !isLowEndDevice && window.matchMedia('(pointer: fine)').matches) {
@@ -912,17 +925,25 @@ if (cursorDot && cursorOutline && !prefersReducedMotion && !isLowEndDevice && wi
   const updateCursor = () => {
     if (!latestPoint) return;
     const { x, y } = latestPoint;
-    cursorDot.style.left = `${x}px`;
-    cursorDot.style.top = `${y}px`;
-    gsap.to(cursorOutline, { x, y, duration: 0.12, ease: 'power2.out', overwrite: true });
+    cursorDot.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+    cursorOutline.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
     cursorFrame = null;
   };
 
-  window.addEventListener('mousemove', (event) => {
+  window.addEventListener('pointermove', (event) => {
     latestPoint = { x: event.clientX, y: event.clientY };
     if (cursorFrame) return;
     cursorFrame = requestAnimationFrame(updateCursor);
   }, { passive: true });
+
+  window.addEventListener('mouseleave', () => {
+    cursorDot.style.opacity = '0';
+    cursorOutline.style.opacity = '0';
+  });
+  window.addEventListener('mouseenter', () => {
+    cursorDot.style.opacity = '1';
+    cursorOutline.style.opacity = '1';
+  });
 }
 
 let scrollFrame = null;
@@ -980,12 +1001,9 @@ if (parallaxIcons.length > 0 && isHighEnd && !prefersReducedMotion && !isLowEndD
   const updateParallax = () => {
     if (!latestParallax) return;
     const { x, y } = latestParallax;
-    gsap.to(parallaxIcons, {
-      x: (i, el) => x * 40 * parseFloat(el.getAttribute('data-speed')),
-      y: (i, el) => y * 40 * parseFloat(el.getAttribute('data-speed')),
-      duration: 0.6,
-      ease: 'power2.out',
-      overwrite: true
+    parallaxIcons.forEach((el) => {
+      const speed = parseFloat(el.getAttribute('data-speed')) || 0;
+      el.style.transform = `translate3d(${x * 40 * speed}px, ${y * 40 * speed}px, 0)`;
     });
     parallaxFrame = null;
   };
@@ -1000,7 +1018,7 @@ if (parallaxIcons.length > 0 && isHighEnd && !prefersReducedMotion && !isLowEndD
   });
 } else {
   parallaxIcons.forEach((el) => {
-    gsap.set(el, { opacity: 0.1 });
+    el.style.opacity = '0.1';
   });
 }
 
@@ -1013,4 +1031,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initReelCardInteractions();
   initGraphicCardInteractions();
   attachHoverEvents();
+  initRevealAnimations();
+  initHeroStatsCounter();
+  initHeroParallax();
 });
