@@ -562,7 +562,7 @@ const lenis = shouldUseMotionEnhancements && typeof Lenis !== 'undefined'
     })
   : { raf() {}, on() {}, stop() {}, start() {} };
 
-/* RAF loop for Lenis */
+/* RAF loop for native/Lenis-style smooth scroll, only when the library exists */
 if (shouldUseMotionEnhancements && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
   lenis.on('scroll', ScrollTrigger.update);
@@ -609,94 +609,6 @@ if (shouldUseMotionEnhancements && typeof gsap !== 'undefined' && typeof ScrollT
     }
   });
 }
-
-/* initThreeJS â€” called dynamically from index.html 2s after page load.
-   Three.js NOT in initial bundle = zero LCP/FCP impact. */
-function initThreeJS() {
-  if (!shouldUseMotionEnhancements) return;
-  if (typeof THREE === 'undefined') return;
-  const canvas = document.getElementById('hero-canvas');
-  if (!canvas) return;
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.15));
-
-  const geom = new THREE.IcosahedronGeometry(1.8, 1);
-  const mat = new THREE.MeshPhongMaterial({ color: 0xa855f7, wireframe: true, transparent: true, opacity: 0.12 });
-  const mesh = new THREE.Mesh(geom, mat);
-  mesh.position.set(3, 0, 0);
-  scene.add(mesh);
-
-  const geom2 = new THREE.OctahedronGeometry(0.9, 0);
-  const mat2 = new THREE.MeshPhongMaterial({ color: 0xc084fc, wireframe: true, transparent: true, opacity: 0.15 });
-  const mesh2 = new THREE.Mesh(geom2, mat2);
-  mesh2.position.set(-3.5, 1, -2);
-  scene.add(mesh2);
-
-  const count = 240;
-  const positions = new Float32Array(count * 3);
-  for (let i = 0; i < count * 3; i++) positions[i] = (Math.random() - 0.5) * 12;
-  const pGeom = new THREE.BufferGeometry();
-  pGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const pMat = new THREE.PointsMaterial({ size: 0.012, color: 0xa855f7, transparent: true, opacity: 0.3 });
-  const particles = new THREE.Points(pGeom, pMat);
-  scene.add(particles);
-
-  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-  const pointLight = new THREE.PointLight(0xa855f7, 2);
-  pointLight.position.set(5, 5, 5);
-  scene.add(pointLight);
-
-  camera.position.z = 6;
-  let mouseX = 0, mouseY = 0;
-  document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX / window.innerWidth - 0.5;
-    mouseY = e.clientY / window.innerHeight - 0.5;
-  }, { passive: true });
-
-  let visible = true;
-  let rafId = 0;
-  const heroObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      visible = entry.isIntersecting;
-      if (!visible && rafId) {
-        cancelAnimationFrame(rafId);
-        rafId = 0;
-      } else if (visible && !rafId) {
-        animate();
-      }
-    });
-  }, { threshold: 0.15 });
-  heroObserver.observe(canvas);
-
-  function animate() {
-    if (!visible) {
-      rafId = 0;
-      return;
-    }
-    rafId = requestAnimationFrame(animate);
-    mesh.rotation.x += 0.003;
-    mesh.rotation.y += 0.004;
-    mesh2.rotation.x -= 0.004;
-    mesh2.rotation.y -= 0.003;
-    particles.rotation.y = mouseX * 0.08;
-    particles.rotation.x = -mouseY * 0.08;
-    mesh.position.x += ((3 + mouseX * 0.8) - mesh.position.x) * 0.04;
-    mesh.position.y += (-mouseY * 0.8 - mesh.position.y) * 0.04;
-    renderer.render(scene, camera);
-  }
-  animate();
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-}
-
 
 function initInfiniteGraphicsTrack() {
   // Graphics row ko duplicate karke infinite scrolling effect diya gaya hai.
