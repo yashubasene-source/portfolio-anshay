@@ -74,14 +74,6 @@
   <link rel="stylesheet" href="assets/css/showcase.min.css">
   <link rel="stylesheet" href="assets/css/features.min.css">
   <link rel="stylesheet" href="assets/css/extras.min.css">
-  <style>
-    .section,
-    .logos-section,
-    .footer {
-      content-visibility: auto;
-      contain-intrinsic-size: 1px 1100px;
-    }
-  </style>
 
 </head>
 <body>
@@ -115,7 +107,10 @@
     <i class="fas fa-cut parallax-icon" data-speed="1.5" style="top: 15%; left: 8%;"></i>
     <i class="fas fa-pen-nib parallax-icon" data-speed="-2.5" style="top: 25%; right: 12%;"></i>
     <i class="fas fa-video parallax-icon" data-speed="2" style="top: 40%; left: 85%;"></i>
+    <i class="fas fa-palette parallax-icon" data-speed="-1.8" style="top: 45%; left: 5%;"></i>
     <i class="fas fa-film parallax-icon" data-speed="2.2" style="top: 60%; right: 8%;"></i>
+    <i class="fas fa-headphones parallax-icon" data-speed="-2" style="top: 75%; left: 15%;"></i>
+    <i class="fas fa-layer-group parallax-icon" data-speed="1.7" style="top: 85%; right: 25%;"></i>
   </div>
 
   <!-- ========== CREATIVE BACKGROUND ELEMENTS ========== -->
@@ -124,6 +119,7 @@
   </div>
   <div class="creative-bg bg-timecode">04:23:15:08</div>
   <div class="creative-bg bg-frame-bracket-1"></div>
+  <div class="creative-bg bg-frame-bracket-2"></div>
 
   <!-- ========== NAVIGATION BAR ========== -->
   <nav class="nav" id="navbar">
@@ -258,6 +254,15 @@
     <div class="logos-label">Trusted &amp; Worked With</div>
     <div class="logos-track-wrap">
       <div class="logos-track">
+        <div class="logo-item"><i class="fab fa-youtube" style="color:#FF0000;"></i><span>YouTube Creators</span></div>
+        <div class="logo-item"><i class="fas fa-landmark" style="color:#FFD700;"></i><span>Political Campaigns</span></div>
+        <div class="logo-item"><i class="fas fa-building" style="color:#00C896;"></i><span>Real Estate Brands</span></div>
+        <div class="logo-item"><i class="fas fa-graduation-cap" style="color:#31A8FF;"></i><span>EdTech Channels</span></div>
+        <div class="logo-item"><i class="fas fa-store" style="color:#FF9A00;"></i><span>Local Businesses</span></div>
+        <div class="logo-item"><i class="fas fa-microphone" style="color:#a855f7;"></i><span>Podcast Studios</span></div>
+        <div class="logo-item"><i class="fas fa-film" style="color:#ff6b6b;"></i><span>Documentary Films</span></div>
+        <div class="logo-item"><i class="fas fa-shirt" style="color:#c084fc;"></i><span>Fashion Brands</span></div>
+        <!-- duplicate for seamless loop -->
         <div class="logo-item"><i class="fab fa-youtube" style="color:#FF0000;"></i><span>YouTube Creators</span></div>
         <div class="logo-item"><i class="fas fa-landmark" style="color:#FFD700;"></i><span>Political Campaigns</span></div>
         <div class="logo-item"><i class="fas fa-building" style="color:#00C896;"></i><span>Real Estate Brands</span></div>
@@ -1035,6 +1040,10 @@
     <div class="marquee-track">
       <span>LET'S CREATE SOMETHING CINEMATIC ✦ </span>
       <span>AVAILABLE FOR NEW PROJECTS ✦ </span>
+      <span>LET'S CREATE SOMETHING CINEMATIC ✦ </span>
+      <span>AVAILABLE FOR NEW PROJECTS ✦ </span>
+      <span>LET'S CREATE SOMETHING CINEMATIC ✦ </span>
+      <span>AVAILABLE FOR NEW PROJECTS ✦ </span>
     </div>
   </div>
 
@@ -1049,24 +1058,16 @@
         <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Real estate walkthrough exceeded expectations" <span class="review-who">â€” Real Estate Agent</span></div>
         <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Thumbnail CTR went from 3% to 9% after redesign!" <span class="review-who">â€” Content Creator</span></div>
         <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Best video editor I have worked with, very professional" <span class="review-who">â€” Brand Client</span></div>
+        <!-- duplicated for seamless loop -->
+        <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Editing was cinematic, client loved it!" <span class="review-who">â€” Aaditya Sir</span></div>
+        <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Delivered in 24h, quality was top notch" <span class="review-who">â€” YouTube Creator</span></div>
+        <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Political documentary looked professional AF" <span class="review-who">â€” Documentary Client</span></div>
+        <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Real estate walkthrough exceeded expectations" <span class="review-who">â€” Real Estate Agent</span></div>
+        <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Thumbnail CTR went from 3% to 9% after redesign!" <span class="review-who">â€” Content Creator</span></div>
+        <div class="review-chip"><span class="review-stars">â˜…â˜…â˜…â˜…â˜…</span> "Best video editor I have worked with, very professional" <span class="review-who">â€” Brand Client</span></div>
       </div>
     </div>
   </div>
-
-  <script>
-    (function () {
-      function duplicateTrack(selector) {
-        const track = document.querySelector(selector);
-        if (!track) return;
-        const items = Array.from(track.children);
-        items.forEach(item => track.appendChild(item.cloneNode(true)));
-      }
-
-      duplicateTrack('.logos-track');
-      duplicateTrack('#review-track');
-      duplicateTrack('.marquee-track');
-    })();
-  </script>
 
 
   <!-- ===== FOOTER ===== -->
@@ -1205,3 +1206,4 @@
   </script>
 </body>
 </html>
+

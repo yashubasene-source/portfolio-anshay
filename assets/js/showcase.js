@@ -506,6 +506,7 @@
   ================================================ */
   var currentSkill = 'all';
   var currentNiche = 'all';
+  var renderToken = 0;
 
   function renderShowcase() {
     var grid = document.getElementById('showcase-grid');
@@ -537,15 +538,34 @@
       return skillMatch && nicheMatch;
     });
 
-    grid.innerHTML = '';
-    list.forEach(function(proj, i){ grid.appendChild(buildCard(proj, Math.min(i*0.05, 0.5))); });
-    
     var countEl = document.getElementById('sc-count');
     if (countEl) {
       countEl.innerHTML = '<strong>' + list.length + '</strong> projects';
     }
-    
-    requestAnimationFrame(observeCards);
+
+    grid.innerHTML = '';
+    var token = ++renderToken;
+    var i = 0;
+    var batchSize = 8;
+
+    function appendBatch() {
+      if (token !== renderToken) return;
+
+      var frag = document.createDocumentFragment();
+      var end = Math.min(i + batchSize, list.length);
+      for (; i < end; i++) {
+        frag.appendChild(buildCard(list[i], Math.min(i * 0.05, 0.5)));
+      }
+      grid.appendChild(frag);
+
+      if (i < list.length) {
+        requestAnimationFrame(appendBatch);
+      } else {
+        requestAnimationFrame(observeCards);
+      }
+    }
+
+    requestAnimationFrame(appendBatch);
   }
 
   /* ================================================
@@ -641,6 +661,7 @@
   ================================================ */
   function initSpotlight() {
     var sec=document.getElementById('portfolio'); if(!sec) return;
+    if (isMobile() || prefersReducedMotion) return;
     var sp=sec.querySelector('.showcase-spotlight');
     if(!sp){ sp=document.createElement('div'); sp.className='showcase-spotlight'; sec.appendChild(sp); }
     sec.addEventListener('mousemove',function(e){

@@ -18,12 +18,16 @@
   const circumference = 408;
   let current = 3;
   let frameCount = 0;
-  
-  // Detect low-end device or slow connection for faster preloader
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isLowEnd = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
-                   (navigator.connection && (navigator.connection.saveData || navigator.connection.effectiveType.includes('2g') || navigator.connection.effectiveType.includes('3g')));
-                   
-  const totalFrames = isLowEnd ? 15 : 45; /* Low-end: 0.5s, High-end: 1.5s */
+                   (navigator.connection && (
+                     navigator.connection.saveData ||
+                     navigator.connection.effectiveType === '2g' ||
+                     navigator.connection.effectiveType === '3g'
+                   ));
+  const skipAnimation = prefersReducedMotion || isLowEnd;
+  const totalFrames = skipAnimation ? 0 : (isLowEnd ? 10 : 24);
   const framesPerNum = Math.floor(totalFrames / 3);
 
   function updateRing(progress) {
@@ -51,6 +55,11 @@
 
   // Lock scroll while preloader shows
   document.body.style.overflow = 'hidden';
+
+  if (skipAnimation) {
+    setTimeout(() => dismissPreloader(), 120);
+    return;
+  }
 
   // Skip button
   const skipBtn = document.getElementById('pl-skip');
@@ -81,7 +90,7 @@
       if (numEl) numEl.textContent = '▶';
       dismissPreloader();
     }
-  }, 1000 / 30); // 30fps
+  }, 1000 / 20); // 20fps keeps the effect but cuts wakeups
 })();
 
 /* ============================================================
@@ -155,17 +164,22 @@
     });
   }
 
+  const shouldPlayHoverFx = !window.matchMedia('(pointer: coarse)').matches &&
+                            !(navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+
   // Attach to buttons
   document.addEventListener('click', (e) => {
     if (e.target.closest('.btn, .niche-tag, .filter-btn, .faq-q, .calc-chip')) {
       playTone(600, 0.05, 'sine', 0.06);
     }
   });
-  document.addEventListener('mouseover', (e) => {
-    if (e.target.closest('.port-card, .result-card, .achievement-card')) {
-      playTone(380, 0.04, 'sine', 0.02);
-    }
-  });
+  if (shouldPlayHoverFx) {
+    document.addEventListener('mouseover', (e) => {
+      if (e.target.closest('.port-card, .result-card, .achievement-card')) {
+        playTone(380, 0.04, 'sine', 0.02);
+      }
+    });
+  }
 })();
 
 /* ============================================================

@@ -925,6 +925,9 @@ document.addEventListener('keydown', (event) => {
 
 const cursorDot = document.querySelector('.cursor-dot');
 const cursorOutline = document.querySelector('.cursor-outline');
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isLowEndDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
+  (navigator.connection && navigator.connection.saveData);
 
 function attachHoverEvents() {
   // Custom cursor ko batata hai ki kis element par hover-link aur kis par hover-video style lagani hai.
@@ -945,27 +948,33 @@ function attachHoverEvents() {
   });
 }
 
-if (cursorDot && cursorOutline) {
+if (cursorDot && cursorOutline && !prefersReducedMotion && !isLowEndDevice && window.matchMedia('(pointer: fine)').matches) {
   // Cursor dot aur outline ko mouse/touch ke sath move karna.
-  window.addEventListener('mousemove', (event) => {
-    cursorDot.style.left = `${event.clientX}px`;
-    cursorDot.style.top = `${event.clientY}px`;
-    gsap.to(cursorOutline, { x: event.clientX, y: event.clientY, duration: 0.15, ease: 'power2.out' });
-  }, { passive: true });
+  let cursorFrame = null;
+  let latestPoint = null;
 
-  window.addEventListener('touchmove', (event) => {
-    if (event.touches.length > 0) {
-      const touch = event.touches[0];
-      cursorDot.style.left = `${touch.clientX}px`;
-      cursorDot.style.top = `${touch.clientY}px`;
-      gsap.to(cursorOutline, { x: touch.clientX, y: touch.clientY, duration: 0.15, ease: 'power2.out' });
-    }
+  const updateCursor = () => {
+    if (!latestPoint) return;
+    const { x, y } = latestPoint;
+    cursorDot.style.left = `${x}px`;
+    cursorDot.style.top = `${y}px`;
+    gsap.to(cursorOutline, { x, y, duration: 0.12, ease: 'power2.out', overwrite: true });
+    cursorFrame = null;
+  };
+
+  window.addEventListener('mousemove', (event) => {
+    latestPoint = { x: event.clientX, y: event.clientY };
+    if (cursorFrame) return;
+    cursorFrame = requestAnimationFrame(updateCursor);
   }, { passive: true });
 }
 
-window.addEventListener('scroll', () => {
+let scrollFrame = null;
+let latestScrollY = 0;
+
+const updateScrollUI = () => {
   // Scroll ke hisab se niche wala timecode aur circular progress update hota hai.
-  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+  const scrollTop = latestScrollY;
   const maxScroll = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   const progress = maxScroll > 0 ? scrollTop / maxScroll : 0;
   const totalFrames = Math.floor(progress * 172800);
@@ -995,23 +1004,43 @@ window.addEventListener('scroll', () => {
     if (progress > 0.05) progressBtn.classList.add('visible');
     else progressBtn.classList.remove('visible');
   }
+  scrollFrame = null;
+};
+
+window.addEventListener('scroll', () => {
+  latestScrollY = document.documentElement.scrollTop || document.body.scrollTop;
+  if (scrollFrame) return;
+  scrollFrame = requestAnimationFrame(updateScrollUI);
 }, { passive: true }); /* passive:true prevents browser scroll blocking */
 
 const parallaxIcons = document.querySelectorAll('.parallax-icon');
 const isHighEnd = window.innerWidth > 1024 && window.matchMedia('(pointer: fine)').matches;
 
-if (parallaxIcons.length > 0 && isHighEnd) {
+if (parallaxIcons.length > 0 && isHighEnd && !prefersReducedMotion && !isLowEndDevice) {
   // High-end desktop par background icons mouse ke hisab se move karte hain.
-  window.addEventListener('mousemove', (event) => {
-    const x = (event.clientX / window.innerWidth - 0.5) * 2;
-    const y = (event.clientY / window.innerHeight - 0.5) * 2;
+  let parallaxFrame = null;
+  let latestParallax = null;
 
+  const updateParallax = () => {
+    if (!latestParallax) return;
+    const { x, y } = latestParallax;
     gsap.to(parallaxIcons, {
       x: (i, el) => x * 40 * parseFloat(el.getAttribute('data-speed')),
       y: (i, el) => y * 40 * parseFloat(el.getAttribute('data-speed')),
-      duration: 1,
-      ease: 'power2.out'
+      duration: 0.6,
+      ease: 'power2.out',
+      overwrite: true
     });
+    parallaxFrame = null;
+  };
+
+  window.addEventListener('mousemove', (event) => {
+    latestParallax = {
+      x: (event.clientX / window.innerWidth - 0.5) * 2,
+      y: (event.clientY / window.innerHeight - 0.5) * 2
+    };
+    if (parallaxFrame) return;
+    parallaxFrame = requestAnimationFrame(updateParallax);
   });
 } else {
   parallaxIcons.forEach((el) => {
