@@ -407,21 +407,76 @@
             var type = typeMap[item.type] || 'video';
             var idMatch = extractYoutubeId(item.link);
             var isGraphic = type === 'graphic';
-            var ytTh = idMatch ? 'https://img.youtube.com/vi/' + idMatch + '/maxresdefault.jpg' : '';
+            var ytTh = idMatch ? 'https://img.youtube.com/vi/' + idMatch + '/hqdefault.jpg' : '';
             var img = item.thumbnail || ytTh || (isGraphic ? item.link : '');
             
-            DYNAMIC_PROJECTS.push({
-              id: key,
-              type: type,
+            // Extract slot and niche information from key to locate target static slot
+            var parts = key.split('-');
+            var globalSlotNum = parseInt(parts.pop(), 10);
+            
+            var niche = 'all';
+            var localSlot = 1;
+            if (!isNaN(globalSlotNum)) {
+              if (globalSlotNum > 40) {
+                niche = 'typography';
+                localSlot = globalSlotNum - 40;
+              } else if (globalSlotNum > 30) {
+                niche = 'normal-edit';
+                localSlot = globalSlotNum - 30;
+              } else if (globalSlotNum > 20) {
+                niche = 'motion';
+                localSlot = globalSlotNum - 20;
+              } else if (globalSlotNum > 10) {
+                niche = 'daily-edit';
+                localSlot = globalSlotNum - 10;
+              } else {
+                niche = 'fun-edit';
+                localSlot = globalSlotNum;
+              }
+            }
+
+            var overrideData = {
               title: item.title,
               client: item.description || 'Admin Upload',
-              ratio: isGraphic ? 'ratio-4-5' : 'ratio-16-9',
               img: img,
               link: item.link,
               openType: item.link && (item.link.includes('youtube') || item.link.includes('youtu.be')) ? 'iframe' : (isGraphic ? 'image' : 'video'),
-              niche: item.niche || 'all',
-              tags: [item.niche]
-            });
+              niche: item.niche || niche,
+              tags: [item.niche || niche]
+            };
+
+            var overridden = false;
+            var idx = localSlot - 1;
+
+            if (type === 'video') {
+              if (idx >= 0 && idx < VIDEOS.length) {
+                VIDEOS[idx] = Object.assign({}, VIDEOS[idx], overrideData, { ytId: idMatch });
+                overridden = true;
+              }
+            } else if (type === 'motion') {
+              var nicheMotions = MOTIONS.filter(function(m) { return m.niche === niche; });
+              var targetItem = nicheMotions[idx];
+              if (targetItem) {
+                var mainIdx = MOTIONS.findIndex(function(m) { return m.id === targetItem.id; });
+                if (mainIdx !== -1) {
+                  MOTIONS[mainIdx] = Object.assign({}, MOTIONS[mainIdx], overrideData);
+                  overridden = true;
+                }
+              }
+            } else if (type === 'graphic') {
+              if (idx >= 0 && idx < GRAPHIC_FILES.length) {
+                GRAPHIC_FILES[idx] = Object.assign({}, GRAPHIC_FILES[idx], overrideData);
+                overridden = true;
+              }
+            }
+
+            if (!overridden) {
+              DYNAMIC_PROJECTS.push(Object.assign({
+                id: key,
+                type: type,
+                ratio: isGraphic ? 'ratio-4-5' : 'ratio-16-9'
+              }, overrideData));
+            }
           }
         }
       }

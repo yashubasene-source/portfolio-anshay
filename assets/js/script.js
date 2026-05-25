@@ -553,7 +553,30 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 const isLowEndDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) ||
   (navigator.connection && navigator.connection.saveData);
 const shouldUseMotionEnhancements = !prefersReducedMotion && !isLowEndDevice && window.innerWidth > 768;
-const lenis = { raf() {}, on() {}, stop() {}, start() {} };
+let lenis = { raf() {}, on() {}, stop() {}, start() {} };
+
+function initSmoothScroll() {
+  if (shouldUseMotionEnhancements && typeof Lenis !== 'undefined') {
+    const lenisInstance = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 2.0,
+      infinite: false,
+    });
+    lenis = lenisInstance;
+    
+    // Connect Lenis to the requestAnimationFrame loop
+    function raf(time) {
+      lenisInstance.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+  }
+}
 
 function initRevealAnimations() {
   const revealEls = document.querySelectorAll('.reveal');
@@ -1023,13 +1046,7 @@ if (parallaxIcons.length > 0 && isHighEnd && !prefersReducedMotion && !isLowEndD
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderPortfolioGrids();
-  const activeFilterBtn = document.querySelector('.filter-btn.active');
-  if (activeFilterBtn) filterWork('all', activeFilterBtn);
-  initInfiniteGraphicsTrack();
-  initReelsRTL();
-  initReelCardInteractions();
-  initGraphicCardInteractions();
+  initSmoothScroll();
   attachHoverEvents();
   initRevealAnimations();
   initHeroStatsCounter();

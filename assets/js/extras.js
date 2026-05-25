@@ -273,7 +273,7 @@
       const price = priceEl.textContent;
       const del = deliveryEl ? deliveryEl.textContent : '3-5 days';
       const msg = encodeURIComponent(`Hi Anshay! 👋\nI'm interested in: *${type}*\nEstimated Budget: *${price}*\nDelivery needed: ${del}\n\nCan we discuss further?`);
-      window.open(`https://wa.me/917869XXXXXX?text=${msg}`, '_blank');
+      window.open(`https://wa.me/918319610243?text=${msg}`, '_blank');
     });
   }
 
@@ -330,7 +330,7 @@
         `Please share your availability!`
       );
       // Replace with your actual WhatsApp number
-      window.open(`https://wa.me/917869XXXXXX?text=${msg}`, '_blank');
+      window.open(`https://wa.me/918319610243?text=${msg}`, '_blank');
       panel.classList.remove('open');
     });
   }

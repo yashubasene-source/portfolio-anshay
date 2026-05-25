@@ -1,7 +1,7 @@
 {
-  "buildCommand": null,
+  "buildCommand": "npm run build",
   "outputDirectory": ".",
-  "installCommand": "echo 'no install needed'",
+  "installCommand": "npm install",
   "headers": [
     {
       "source": "/(.*)\\.(?:webp|png|jpg|jpeg|svg|ico|woff2|woff)",

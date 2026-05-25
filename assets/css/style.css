@@ -63,19 +63,24 @@
    USAGE: Apply via var(--accent) throughout stylesheets
 */
 :root {
-  --accent: #a855f7;
-  --accent-dim: rgba(168,85,247,0.12);
-  --accent-glow: rgba(168,85,247,0.30);
-  --accent-bright: #c084fc;
-  --bg: #080808;
-  --bg2: #0d0d0d;
-  --card: #111111;
-  --card2: #161616;
-  --border: rgba(255,255,255,0.07);
-  --border-a: rgba(168,85,247,0.20);
-  --text: #F0EDE8;
-  --muted: #666;
-  --muted2: #999;
+  --accent: #8b5cf6;
+  --accent-dim: rgba(139,92,246,0.12);
+  --accent-glow: rgba(139,92,246,0.25);
+  --accent-bright: #a78bfa;
+  --bg: #09090b;
+  --bg2: #0f0f13;
+  --card: #18181b;
+  --card2: #27272a;
+  --border: rgba(255,255,255,0.08);
+  --border-a: rgba(139,92,246,0.20);
+  --text: #fafafa;
+  --muted: #71717a;
+  --muted2: #a1a1aa;
+}
+
+/* Hide custom cursor on non-fine pointer devices to improve performance */
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .cursor-dot, .cursor-outline { display: none !important; }
 }
 
 /* ========== GLOBAL RESET & BASE STYLES ========== 

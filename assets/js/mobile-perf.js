@@ -72,12 +72,13 @@ function initBeforeAfterSliders() {
       e.preventDefault();
     }, { passive: false });
 
-    window.addEventListener('touchmove', (e) => {
+    wrapEl.addEventListener('touchmove', (e) => {
       if (!isDragging) return;
       updateSlider(e.touches[0].clientX);
-    }, { passive: true });
+      e.preventDefault();
+    }, { passive: false });
 
-    window.addEventListener('touchend', () => { isDragging = false; });
+    wrapEl.addEventListener('touchend', () => { isDragging = false; });
 
     // Auto-animate on first viewport entry to hint the interaction
     const observer = new IntersectionObserver((entries) => {
